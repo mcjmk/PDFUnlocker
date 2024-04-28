@@ -1,10 +1,11 @@
 #! python3
 # PDFUnlocker - a simple script to remove passwords from your PDF files (assuming you know the password).
+import threading
 import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
 import os
 import PyPDF2
-
+import time
 
 class PDFUnlocker:
     def __init__(self):
@@ -38,34 +39,51 @@ class PDFUnlocker:
     def unlock_pdfs(self):
         if not self.input_folder:
             messagebox.showerror("Error", "Please choose input_folder!")
+            return
 
         elif not self.output_folder:
             messagebox.showerror("Error", "Please choose input_folder!")
+            return
 
-        else:
-            password = self.password_entry.get()
-            for filename in os.listdir(self.input_folder):
-                if filename.endswith('.pdf'):
-                    input_path = os.path.join(self.input_folder, filename)
-                    output_path = os.path.join(self.output_folder, filename.replace('.pdf', '_unlocked.pdf'))
-                    with open(input_path, 'rb') as lockedPDF:
-                        reader = PyPDF2.PdfReader(lockedPDF)
-                        if reader.is_encrypted:
-                            try:
-                                reader.decrypt(password)
-                            except Exception as e:
-                                messagebox.showerror("Error", f"Failed to decrypt {filename}. Error: {e}")
-                                continue
-                        with open(output_path, 'wb') as unlockedPDF:
-                            writer = PyPDF2.PdfWriter()
-                            for i in range(len(reader.pages)):
-                                writer.add_page(reader.pages[i])
-                            writer.write(unlockedPDF)
-                    print(f"{filename} unlocked successfully is now in {output_path}")
+        start_time = time.time()
+        unlockThreads = []
+        for filename in os.listdir(self.input_folder):
+            if filename.endswith('.pdf'):
+                password = self.password_entry.get()
+                input_path = os.path.join(self.input_folder, filename)
+                output_path = os.path.join(self.output_folder, filename.replace('.pdf', '_unlocked.pdf'))
+                unlockThread = threading.Thread(target=self.unlock_pdf, args=(filename, password, input_path, output_path))
+                unlockThreads.append(unlockThread)
+                unlockThread.start()
+        for unlockThread in unlockThreads:
+            unlockThread.join()
+
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Unlocking time: {elapsed_time}")
+
+    @staticmethod
+    def unlock_pdf(filename, password, input_path, output_path):
+        try:
+            with open(input_path, 'rb') as lockedPDF:
+                reader = PyPDF2.PdfReader(lockedPDF)
+                if reader.is_encrypted:
+                    try:
+                        reader.decrypt(password)
+                    except Exception as e:
+                        messagebox.showerror("Error", f"Failed to decrypt {filename}. Error: {e}")
+                with open(output_path, 'wb') as unlockedPDF:
+                    writer = PyPDF2.PdfWriter()
+                    for i in range(len(reader.pages)):
+                        writer.add_page(reader.pages[i])
+                    writer.write(unlockedPDF)
+            print(f"{filename} unlocked successfully is now in {output_path}")
+        except Exception as e:
+            messagebox.showerror(f"Failed to decrypt {filename}", "")
 
     def run(self):
         self.root.mainloop()
 
 
 if __name__ == '__main__':
-    pdf_unlocker = PDFUnlocker().run()
+    PDFUnlocker().run()
