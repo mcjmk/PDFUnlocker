@@ -11,8 +11,9 @@ This simple python script enables to remove passwords from your PDF files (assum
 ## How to run
 The instructions on setting up and running the script will be provided soon.
 
+
 ## Future Enhancements
 - [ ]  Development of a more user-friendly GUI.
 - [ ] Implementing an option to select PDF files for unlocking instead of input folder
-- [ ] Implementing multi-threading to speed up the process
+- [x] Implementing multi-threading to speed up the process
  
