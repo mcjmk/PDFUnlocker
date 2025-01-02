@@ -4,7 +4,7 @@ import threading
 import tkinter as tk
 from tkinter import filedialog, simpledialog, messagebox
 import os
-import PyPDF2
+import pypdf
 import time
 
 class PDFUnlocker:
@@ -66,14 +66,14 @@ class PDFUnlocker:
     def unlock_pdf(filename, password, input_path, output_path):
         try:
             with open(input_path, 'rb') as lockedPDF:
-                reader = PyPDF2.PdfReader(lockedPDF)
+                reader = pypdf.PdfReader(lockedPDF)
                 if reader.is_encrypted:
                     try:
                         reader.decrypt(password)
                     except Exception as e:
                         messagebox.showerror("Error", f"Failed to decrypt {filename}. Error: {e}")
                 with open(output_path, 'wb') as unlockedPDF:
-                    writer = PyPDF2.PdfWriter()
+                    writer = pypdf.PdfWriter()
                     for i in range(len(reader.pages)):
                         writer.add_page(reader.pages[i])
                     writer.write(unlockedPDF)
